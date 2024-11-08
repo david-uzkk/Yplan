@@ -2,19 +2,22 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
+  const { login } = useAuth(); // Obtém a função login do contexto
+  const navigate = useNavigate(); // Hook para navegação
 
   const handleLogin = async (event) => {
     event.preventDefault();
 
     try {
-      // Ajuste no endpoint para o caminho correto
       const response = await axios.post('http://localhost:3000/auth/login', { email });
-      setMessage(`Login realizado com sucesso! Bem-vindo, ${response.data.email}`);
-      // Redirecionamento ou outra ação após o login bem-sucedido
+      login(response.data); // Atualiza o estado do usuário com os dados recebidos
+      navigate('/main'); // Redireciona para a página principal
     } catch (error) {
       console.error('Erro ao fazer login:', error);
       setMessage('Erro ao fazer login. Tente novamente.');
