@@ -32,3 +32,20 @@
     margin-left: 1rem;
   }
   
+  .routine-area ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.routine-area li {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+.routine-area button {
+  margin-left: 0.5rem;
+}
