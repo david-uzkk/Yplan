@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import './MainPage.css';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import debounce from 'lodash/debounce';
+import './MainPage.css';
 
 const MainPage = () => {
   const [rotinas, setRotinas] = useState([]);
   const [exercises, setExercises] = useState([]);
   const [filter, setFilter] = useState("");
+  const [selectedExercises, setSelectedExercises] = useState({});
+  const [showModal, setShowModal] = useState(false);
+  const [currentRoutineId, setCurrentRoutineId] = useState(null);
 
-  // Função para carregar rotinas do backend ao iniciar a página
+  // Carregar rotinas
   useEffect(() => {
     const fetchRoutines = async () => {
       try {
@@ -21,7 +23,7 @@ const MainPage = () => {
     fetchRoutines();
   }, []);
 
-  // Função para carregar exercícios do backend
+  // Carregar exercícios
   useEffect(() => {
     const fetchExercises = async () => {
       try {
@@ -34,49 +36,43 @@ const MainPage = () => {
     fetchExercises();
   }, []);
 
-  // Função para salvar rotinas no backend com debounce
-  const saveRoutine = useCallback(
-    debounce(async (updatedRoutines) => {
-      try {
-        await axios.patch('http://localhost:3000/api/routines/update', { rotinas: updatedRoutines });
-        console.log("Auto-save realizado com sucesso!");
-      } catch (error) {
-        console.error("Erro ao salvar rotinas:", error);
-      }
-    }, 1000), [] // 1000ms debounce delay
-  );
-
-  // Função para criar uma nova rotina e salvar no backend
-  const handleCreateRoutine = async () => {
-    const novaRotina = { id: Date.now(), nome: `Rotina ${rotinas.length + 1}`, usuarioId: 1 }; // Ajuste usuarioId conforme necessário
-    const novasRotinas = [...rotinas, novaRotina];
-    setRotinas(novasRotinas);
-    await saveRoutine(novasRotinas);
-  };
-
-  // Função para excluir uma rotina e salvar no backend
-  const handleDeleteRoutine = async (id) => {
-    const novasRotinas = rotinas.filter(rotina => rotina.id !== id);
-    setRotinas(novasRotinas);
-    try {
-      await axios.delete(`http://localhost:3000/api/routines/${id}`);
-      console.log(`Rotina ${id} excluída com sucesso!`);
-    } catch (error) {
-      console.error("Erro ao excluir rotina:", error);
-    }
-  };
-
-  // useEffect para observar mudanças no estado de rotinas e disparar o auto-save
-  useEffect(() => {
-    if (rotinas.length > 0) { // Apenas realiza auto-save se houver rotinas
-      saveRoutine(rotinas);
-    }
-  }, [rotinas, saveRoutine]);
-
-  // Filtro aplicado à lista de exercícios
+  // Filtro aplicado aos exercícios
   const filteredExercises = exercises.filter(exercise =>
     filter ? exercise.tipo.includes(filter) : true
   );
+
+  // Adicionar exercício à rotina
+  const addExerciseToRoutine = (rotinaId, exerciseId) => {
+    const newSelectedExercises = { ...selectedExercises };
+    if (!newSelectedExercises[rotinaId]) {
+      newSelectedExercises[rotinaId] = [];
+    }
+    if (!newSelectedExercises[rotinaId].includes(exerciseId)) {
+      newSelectedExercises[rotinaId].push(exerciseId);
+      setSelectedExercises(newSelectedExercises);
+    }
+  };
+
+  // Remover exercício da rotina
+  const removeExerciseFromRoutine = (rotinaId, exerciseId) => {
+    const newSelectedExercises = { ...selectedExercises };
+    if (newSelectedExercises[rotinaId]) {
+      newSelectedExercises[rotinaId] = newSelectedExercises[rotinaId].filter(id => id !== exerciseId);
+      setSelectedExercises(newSelectedExercises);
+    }
+  };
+
+  // Abrir modal para adicionar exercício
+  const openModal = (rotinaId) => {
+    setCurrentRoutineId(rotinaId);
+    setShowModal(true);
+  };
+
+  // Fechar modal
+  const closeModal = () => {
+    setShowModal(false);
+    setCurrentRoutineId(null);
+  };
 
   return (
     <div className="main-page">
@@ -89,14 +85,25 @@ const MainPage = () => {
       <main className="content">
         <section className="routine-area">
           <h2>Suas Rotinas</h2>
-          <button className="create-routine-button" onClick={handleCreateRoutine}>
-            Criar Nova Rotina
-          </button>
-          <ul>
+          <ul className="routine-list">
             {rotinas.map(rotina => (
-              <li key={rotina.id}>
-                {rotina.nome}
-                <button onClick={() => handleDeleteRoutine(rotina.id)}>Excluir</button>
+              <li key={rotina.id} className="routine-item">
+                <div className="routine-header">
+                  <h3>{rotina.nome}</h3>
+                  <button onClick={() => openModal(rotina.id)} className="add-exercise-button">
+                    Adicionar Exercício
+                  </button>
+                </div>
+                <ul className="exercise-list">
+                  {selectedExercises[rotina.id] && selectedExercises[rotina.id].map(exerciseId => (
+                    <li key={exerciseId} className="exercise-item">
+                      {exercises.find(ex => ex.id === exerciseId)?.nome}
+                      <button onClick={() => removeExerciseFromRoutine(rotina.id, exerciseId)} className="remove-exercise-button">
+                        Remover
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </li>
             ))}
           </ul>
@@ -111,14 +118,36 @@ const MainPage = () => {
             onChange={(e) => setFilter(e.target.value)}
           />
           <div className="exercise-box">
-            {filteredExercises.map((exercise) => (
-              <div key={exercise.id} className="exercise-item">
-                {exercise.nome} - {exercise.tipo}
+            {filteredExercises.map(exercise => (
+              <div key={exercise.id} className="exercise-card">
+                <h4>{exercise.nome}</h4>
+                <p>{exercise.tipo}</p>
               </div>
             ))}
           </div>
         </section>
       </main>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Adicionar Exercício</h2>
+            <button onClick={closeModal} className="close-modal-button">Fechar</button>
+            <div className="exercise-list">
+              {filteredExercises.map(exercise => (
+                <div key={exercise.id} className="exercise-card">
+                  <h4>{exercise.nome}</h4>
+                  <p>{exercise.tipo}</p>
+                  <button onClick={() => addExerciseToRoutine(currentRoutineId, exercise.id)} className="add-to-routine-button">
+                    Adicionar
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
