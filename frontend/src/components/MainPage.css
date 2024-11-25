@@ -49,3 +49,27 @@
 .routine-area button {
   margin-left: 0.5rem;
 }
+
+.exercise-list {
+  margin: 20px;
+  padding: 10px;
+  border: 2px solid purple;
+  border-radius: 8px;
+}
+
+.exercise-box {
+  margin-top: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: lavender;
+  border: 1px solid purple;
+}
+
+.exercise-item {
+  padding: 5px;
+  margin: 5px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+}

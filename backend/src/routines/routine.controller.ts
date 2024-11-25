@@ -20,4 +20,9 @@ export class RoutineController {
   async deleteRoutine(@Param('id') id: number) {
     return this.routineService.deleteRoutine(id);
   }
+
+  @Get('/exercises')
+  async getExercises() {
+    return this.routineService.getAllExercises();
+  }
 }
