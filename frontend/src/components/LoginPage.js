@@ -2,17 +2,19 @@
 
 import React, { useState } from 'react';
 import axios from 'axios';
+import './style.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 function LoginPage() {
-  const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
   const { login } = useAuth(); // Obtém a função login do contexto
   const navigate = useNavigate(); // Hook para navegação
 
   const handleLogin = async (event) => {
     event.preventDefault();
+
+    const email = 'teste@exemplo.com'; // Email fixo
 
     try {
       const response = await axios.post('http://localhost:3000/auth/login', { email });
@@ -28,15 +30,6 @@ function LoginPage() {
     <div>
       <h1>yPlan - Login</h1>
       <form onSubmit={handleLogin}>
-        <label>
-          E-mail:
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
         <button type="submit">Entrar</button>
       </form>
       {message && <p>{message}</p>}

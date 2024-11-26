@@ -3,10 +3,10 @@ import { Module } from '@nestjs/common';
 import { AuthController } from './auth/auth.controller';
 import { AuthService } from './auth/auth.service';
 import { PrismaService } from './prisma/prisma.service';
-import { RoutineModule } from './routines/routine.module'; // Importação do novo módulo
+import { RoutineModule } from './routines/routine.module'; 
 
 @Module({
-  imports: [RoutineModule], // Adiciona RoutineModule à lista de imports
+  imports: [RoutineModule],
   controllers: [AuthController],
   providers: [AuthService, PrismaService],
 })

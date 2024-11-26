@@ -1,5 +1,4 @@
-// src/routines/routine.controller.ts
-import { Controller, Patch, Body, Get, Delete, Param } from '@nestjs/common';
+import { Controller, Patch, Body, Get, Delete, Param, Post, ParseIntPipe } from '@nestjs/common';
 import { RoutineService } from './routine.service';
 
 @Controller('api/routines')
@@ -12,8 +11,8 @@ export class RoutineController {
   }
 
   @Get()
-  async getRoutines() {
-    return this.routineService.getAllRoutines();
+  async getRoutines(@Param('userId') userId: number) {
+    return this.routineService.getAllRoutines(userId);
   }
 
   @Delete(':id')
@@ -25,4 +24,24 @@ export class RoutineController {
   async getExercises() {
     return this.routineService.getAllExercises();
   }
+
+  @Post('/exercises')
+  async createExercise(@Body() exercicio: any) {
+    return this.routineService.createExercise(exercicio);
+  }
+
+  @Patch('/exercises/:id')
+  async updateExercise(
+    @Param('id', ParseIntPipe) id: number, // Converte o id para número automaticamente
+    @Body() exercicio: any
+  ) {
+    return this.routineService.updateExercise(id, exercicio);
+  }
+  
+
+  @Delete('/exercises/:id')
+  async deleteExercise(@Param('id', ParseIntPipe) id: number) {
+    return this.routineService.deleteExercise(id);
+  }
+  
 }
