@@ -20,16 +20,22 @@ const MainPage = () => {
   const [currentRoutineId, setCurrentRoutineId] = useState(null);
   const [showEditExerciseModal, setShowEditExerciseModal] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState(null);
+  const [isSaving, setIsSaving] = useState(false); 
+  const [error, setError] = useState(null); 
 
   // Função para salvar rotinas no backend com debounce
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const saveRoutine = useCallback(debounce(async (updatedRoutines) => {
+    if (isSaving) return; // Impede múltiplas chamadas simultâneas
+    setIsSaving(true); // Marca como "salvando"
     try {
       console.log("Rotinas para salvar:", updatedRoutines);
       const response = await axios.patch('http://localhost:3000/api/routines/update', { rotinas: updatedRoutines });
       console.log("Auto-save realizado com sucesso:", response.data);
     } catch (error) {
       console.error("Erro ao salvar rotinas:", error);
+    } finally {
+      setIsSaving(false); // Marca como "não salvando" quando terminar
     }
   }, 100)); 
 
@@ -125,25 +131,34 @@ const MainPage = () => {
   // Função para criar uma nova rotina
   const handleCreateRoutine = async () => {
     const novaRotina = { id: Date.now(), nome: `Rotina ${rotinas.length + 1}`, usuarioId: user.id }; 
-    const novasRotinas = [...rotinas, novaRotina];
-    setRotinas(novasRotinas);
-    saveRoutine(novasRotinas); // Envia para o backend
+    
+    // Use a função de atualização do estado que recebe o estado anterior
+    setRotinas((prevRotinas) => [...prevRotinas, novaRotina])
+    
+    
+     // const novasRotinas = ; // Cria uma nova lista
+      saveRoutine([novaRotina]); // Envia para o backend
+
   };
 
   // Função para excluir uma rotina
   const handleDeleteRoutine = async (id) => {
     try {
-      await axios.delete(`http://localhost:3000/api/routines/${id}`);
-      console.log(`Rotina ${id} excluída com sucesso!`);
-
-      const novasRotinas = rotinas.filter(rotina => rotina.id !== id);
-      setRotinas(novasRotinas);
-
-      saveRoutine(novasRotinas); // Envia para o backend
+      const response = await axios.delete(`http://localhost:3000/api/routines/${id}`);
+      if (response.status === 200 || response.status === 204) {
+        console.log(`Rotina ${id} excluída com sucesso!`);
+  
+        const novasRotinas = rotinas.filter(rotina => rotina.id !== id);
+        setRotinas(novasRotinas);
+  
+       // saveRoutine(novasRotinas); // Envia para o backend
+      } else {
+        console.error("Falha na exclusão da rotina:", response.data);
+      }
     } catch (error) {
-      console.error("Erro ao excluir rotina:", error);
+      console.error("Erro ao excluir rotina:", error.response?.data || error.message || error);
     }
-  };
+  };  
 
   // Abrir modal para adicionar exercício
   const openModal = (rotinaId) => {
@@ -167,13 +182,26 @@ const MainPage = () => {
 
   const handleCreateExercise = async () => {
     try {
+      // Envia a solicitação de criação do exercício para o backend
       const response = await axios.post('http://localhost:3000/api/routines/exercises', newExercise);
       setExercises([...exercises, response.data]); // Atualiza a lista local de exercícios
       setNewExercise({ nome: "", tipo: "" }); // Reseta os campos
       setShowCreateExerciseModal(false); // Fecha o modal
       console.log("Exercício criado com sucesso:", response.data);
-    } catch (error) {
-      console.error("Erro ao criar exercício:", error);
+    } catch (err) {
+      if (err.response && err.response.data) {
+        // Se o erro for proveniente do backend
+        setError(err.response.data.message || "Erro desconhecido ao criar exercício.");
+      } else {
+        // Se for outro tipo de erro (como erro de rede)
+        setError("Erro de rede ou servidor.");
+      }
+      console.error("Erro ao criar exercício:", err);
+
+      // Configurar o timeout para limpar o erro após 3 segundos
+      setTimeout(() => {
+        setError(null); // Limpa o erro após 3 segundos
+      }, 3000); 
     }
   };
 
@@ -279,6 +307,13 @@ const MainPage = () => {
           </div>
         </section>
       </main>
+
+      {/* Exibir alerta de erro, se houver */}
+      {error && (
+        <div className="alert-error">
+          <p>{error}</p>
+        </div>
+      )}
 
       {showModal && (
         <div className="modal-overlay">

@@ -419,3 +419,23 @@ input[type="text"] {
   margin-top: 9rem;
 }
 
+.alert-error {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  margin: 20px 0;
+  border: 1px solid #f5c6cb;
+  border-radius: 5px;
+  font-size: 16px;
+  animation: fadeOut 3s forwards; /* Aplica a animação para desaparecer após 3 segundos */
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    display: none;
+  }
+}
